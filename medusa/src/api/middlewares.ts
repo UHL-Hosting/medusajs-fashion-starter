@@ -26,4 +26,13 @@ export default defineMiddlewares([
     matcher: '/store/custom/customer/*',
     middlewares: [authenticate('customer', ['session', 'bearer'])],
   },
+  {
+    method: 'ALL',
+    matcher: '/store/custom/stripe/*',
+    middlewares: [
+      authenticate('customer', ['session', 'bearer'], {
+        allowUnauthenticated: true,
+      }),
+    ],
+  },
 ]);
