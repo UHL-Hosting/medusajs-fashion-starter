@@ -235,10 +235,17 @@ export async function setPaymentMethod(
   session_id: string,
   token: string | null | undefined
 ) {
+  const cartId = await getCartId()
+
+  if (!cartId) {
+    throw new Error("Missing cart ID when setting payment method")
+  }
+
   await sdk.client
     .fetch("/store/custom/stripe/set-payment-method", {
       method: "POST",
-      body: { session_id, token },
+      body: { cart_id: cartId, session_id, token },
+      headers: { ...(await getAuthHeaders()) },
     })
     .then((resp) => {
       revalidateTag("cart")
@@ -248,8 +255,20 @@ export async function setPaymentMethod(
 }
 
 export async function getPaymentMethod(id: string) {
+  const cartId = await getCartId()
+
+  if (!cartId) {
+    throw new Error("Missing cart ID when retrieving payment method")
+  }
+
   return await sdk.client
-    .fetch<PaymentMethod>(`/store/custom/stripe/get-payment-method/${id}`)
+    .fetch<PaymentMethod>(
+      `/store/custom/stripe/get-payment-method/${encodeURIComponent(id)}`,
+      {
+        query: { cart_id: cartId },
+        headers: { ...(await getAuthHeaders()) },
+      }
+    )
     .then((resp: PaymentMethod) => {
       return resp
     })
