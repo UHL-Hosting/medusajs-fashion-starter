@@ -23,6 +23,14 @@ const DATABASE_URL =
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379"
 
+function requireSecret(name) {
+  const value = process.env[name]
+  if (!value || !value.trim()) {
+    throw new Error(`${name} environment variable is required`)
+  }
+  return value
+}
+
 export default defineConfig({
   plugins: [
     `medusa-fulfillment-manual`,
@@ -43,8 +51,8 @@ export default defineConfig({
       storeCors: STORE_CORS,
       adminCors: ADMIN_CORS,
       authCors: process.env.AUTH_CORS || ADMIN_CORS,
-      jwtSecret: process.env.JWT_SECRET || "supersecret",
-      cookieSecret: process.env.COOKIE_SECRET || "supersecret",
+      jwtSecret: requireSecret("JWT_SECRET"),
+      cookieSecret: requireSecret("COOKIE_SECRET"),
     },
     redisUrl: REDIS_URL,
   },
