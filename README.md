@@ -178,6 +178,10 @@ cd medusa
 # Create the .env file
 cp .env.template .env
 
+# Set JWT_SECRET and COOKIE_SECRET in .env to unique random values
+# (the backend refuses to start without them), e.g.:
+#   openssl rand -base64 32
+
 # Install dependencies
 yarn
 

@@ -4,6 +4,16 @@ loadEnv(process.env.NODE_ENV, process.cwd());
 
 const isMedusaCloud = Boolean(process.env.MEDUSA_CLOUD_ENVIRONMENT_HANDLE);
 
+function requireSecret(name) {
+  const value = process.env[name];
+  if (!value || !value.trim()) {
+    throw new Error(
+      `${name} environment variable is required. Generate one with \`openssl rand -base64 32\`.`
+    );
+  }
+  return value;
+}
+
 module.exports = defineConfig({
   admin: {
     backendUrl:
@@ -16,8 +26,8 @@ module.exports = defineConfig({
       storeCors: process.env.STORE_CORS,
       adminCors: process.env.ADMIN_CORS,
       authCors: process.env.AUTH_CORS,
-      jwtSecret: process.env.JWT_SECRET || "supersecret",
-      cookieSecret: process.env.COOKIE_SECRET || "supersecret",
+      jwtSecret: requireSecret("JWT_SECRET"),
+      cookieSecret: requireSecret("COOKIE_SECRET"),
       jwtExpiresIn: process.env.JWT_EXPIRES_IN || "24h",
     },
   },
