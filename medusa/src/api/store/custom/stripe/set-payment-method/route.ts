@@ -1,12 +1,17 @@
-import { MedusaResponse, MedusaStoreRequest } from "@medusajs/framework";
+import {
+  AuthenticatedMedusaRequest,
+  MedusaResponse,
+} from "@medusajs/framework";
 import { IPaymentModuleService } from "@medusajs/framework/types";
-import { Modules } from "@medusajs/framework/utils";
+import { MedusaError, Modules } from "@medusajs/framework/utils";
 import Stripe from "stripe";
+import { retrieveCallerCartPaymentSessions } from "../helpers";
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY);
 
 export const POST = async (
-  req: MedusaStoreRequest<{
+  req: AuthenticatedMedusaRequest<{
+    cart_id: string;
     session_id: string;
     token: string;
   }>,
@@ -15,6 +20,21 @@ export const POST = async (
   const paymentModuleService: IPaymentModuleService = req.scope.resolve(
     Modules.PAYMENT
   );
+
+  const cartSessions = await retrieveCallerCartPaymentSessions(
+    req,
+    req.body.cart_id
+  );
+
+  if (
+    typeof req.body.session_id !== "string" ||
+    !cartSessions.some((cartSession) => cartSession.id === req.body.session_id)
+  ) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_FOUND,
+      "Payment session not found"
+    );
+  }
 
   const session = await paymentModuleService.retrievePaymentSession(
     req.body.session_id
@@ -29,6 +49,7 @@ export const POST = async (
       },
     });
     res.status(200).json({ success: true });
+    return;
   }
 
   const paymentMethod = await stripe.paymentMethods.create({
